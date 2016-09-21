@@ -1,4 +1,6 @@
 #include "Model.h"
+#include "proto.h"
+
 #include <iostream>
 
 Model::Model(){
@@ -13,11 +15,11 @@ Model::Model(){
  * If the model has already been digested, this takes additional
  * time.
  */
-bool Model::update(unsigned char c){
+bool Model::update(uint8_t c){
 	update(c, 1);
 }
 
-bool Model::update(unsigned char c, int count){
+bool Model::update(uint8_t c, int count){
 	freqs[c] += count;		// Increment the character's frequency
 	total += count;			// Increment the total size
 
@@ -46,6 +48,7 @@ void Model::digest(){
 	// Accumulate the frequencies
 	for (int i = 1; i < 256; i++){
 		freqs[i] += freqs[i - 1];
+		// std::cout << i << ": " << freqs[i] << std::endl;
 	}
 }
 
@@ -68,24 +71,24 @@ void Model::undigest(){
 	}
 }
 
+#include <iostream> //tmp
 /*
  * Calculates the upper bound of c, given the restrictions top and bot.
  *
  * If the model has not already been digested, calcUpper() digests it 
  * before doing calculations.
  */
-uint Model::calcUpper(unsigned char c, uint bot, uint top){
-	if (!digested){
-		digest();
-	}
+uint32_t Model::calcUpper(uint8_t c, uint32_t bot, uint32_t top){
+	digest();
 
 	// Determine the current range
-	int range = top - bot;
+	uint64_t range = (uint64_t)top - bot + 1;
 
 	// Scale the top of the character onto the current range
-	int num = freqs[c + 1] * range;
-	// Finish the scaling with ceiling division
-	return num / total + ((num % total) ? 1 : 0);
+	uint64_t num = freqs[c] * range;
+	// std::cout << range << ", " << total << ", " << freqs[c] << std::endl;
+	// Keep top inclusive
+	return num / total - ((num % total) ? 0 : 1); // TODO: what the hell am i doing?
 }
 
 /*
@@ -94,15 +97,16 @@ uint Model::calcUpper(unsigned char c, uint bot, uint top){
  * If the model has not already been digested, calcLower() digests it 
  * before doing calculations.
  */
-uint Model::calcLower(unsigned char c, uint bot, uint top){
+uint32_t Model::calcLower(uint8_t c, uint32_t bot, uint32_t top){
 	digest();
 
 	// Determine the current range
-	int range = top - bot;
+	uint64_t range = (uint64_t)top - bot + 1;
 
 	// Scale the bottom of the character onto the current range
-	int num = freqs[c] * range;
-	// Finish the scaling with ceiling division
+	uint64_t num = range * (c ? freqs[c - 1] : 0);
+	// std::cout << range << ", " << total << ", " << (c ? freqs[c - 1] : 0) << std::endl;
+	// Ceiling division to keep bot inclusive
 	return num / total + ((num % total) ? 1 : 0);
 }
 
@@ -112,20 +116,27 @@ uint Model::calcLower(unsigned char c, uint bot, uint top){
  * If the model has not already been digested, getChar() digests it before
  * doing calculations.
  */
-unsigned char Model::getChar(uint enc, uint bot, uint top){ // TODO: has issues if enc is 0
+uint8_t Model::getChar(uint32_t enc, uint32_t bot, uint32_t top){ // TODO: has issues if enc is 0
 	digest();
+	// std::cout  << "enc: " << enc << std::endl;
+	// std::cout << "total: " << total << std::endl;
+	// std::cout  << "top: " << top << std::endl;
+	// std::cout << "bot: " << bot << std::endl;
 
 	// Scale enc onto the total number of characters seen
-	uint range = top - bot;
+	uint64_t range = (uint64_t)top - bot + 1;
+	// std::cout << "range: " << range << std::endl;
+	enc = (uint64_t)(enc - bot) * total / range + 1;
 
+	// std::cout  << "enc: " << enc << std::endl;
 	// Binary search freqs for the closest value <= c
 	top = 0xFF;
 	bot = 0x00;
-	uint mid;
+	uint32_t mid;
 
-	while (top - 1 > bot){
-		mid = (top + bot) / 2;
-		// std::cout << "(" << bot << ", " << mid << ", " << top << ")\n";
+	while (top > bot + 1){ //dis be fked up
+		mid = (top + bot + 1) / 2;
+		// std::cout << "(" << bot << ", " << mid << " (" << freqs[mid] << "), " << top << ")\n";
 		if (freqs[mid] < enc){
 			bot = mid;
 		}
@@ -134,14 +145,15 @@ unsigned char Model::getChar(uint enc, uint bot, uint top){ // TODO: has issues 
 		}
 	}
 
+	// std::cout << "Char value: " <<  top << std::endl;
 	return top;	// The character corresponds directly to the index
 }
 
-uint Model::getTotal(){
+uint32_t Model::getTotal(){
 	return total;
 }
 
-uint Model::getCharCount(unsigned char c){
+uint32_t Model::getCharCount(uint8_t c){
 	return freqs[c];
 }
 
@@ -169,7 +181,7 @@ void Model::exportModel(std::ostream& out){
 	}
 
 	// First, encode the total
-	out.write((char*)&total, sizeof(uint));
+	out.write((char*)&total, TYPESIZE_BYTES);
 
 	// Encode frequencies other than EOT (0x04)
 	int i;
@@ -177,20 +189,20 @@ void Model::exportModel(std::ostream& out){
 		// Only encode frequencies if necessary
 		if (freqs[i] > 0){
 			out.put((char) i);
-			out.write((char*)&freqs[i], sizeof(uint));
+			out.write((char*)&freqs[i], TYPESIZE_BYTES);
 		}
 	}
 	for(i = 5; i < 256; i++){
 		// Only encode frequencies if necessary
 		if (freqs[i] > 0){
 			out.put((char) i);
-			out.write((char*)&freqs[i], sizeof(uint));
+			out.write((char*)&freqs[i], TYPESIZE_BYTES);
 		}
 	}
 
 	// EOT (0x04) gets encoded last
 	out.put(0x4);
-	out.write((char*)&freqs[4], sizeof(uint));
+	out.write((char*)&freqs[4], TYPESIZE_BYTES);
 }
 
 /*
@@ -202,13 +214,13 @@ void Model::exportModel(std::ostream& out){
 void Model::importModel(std::istream& in){
 	reset();
 
-	in.read((char*)&total, sizeof(uint));
+	in.read((char*)&total, TYPESIZE_BYTES);
 
 	char c = 0;
 	int i = 0;
 	// Until after an EOT (0x04) is decoded
 	while (c != 4 && in.good()){
 		in.get(c);
-		in.read((char*)&freqs[(unsigned char)c], sizeof(uint));
+		in.read((char*)&freqs[(uint8_t)c], TYPESIZE_BYTES);
 	}
 }

@@ -1,6 +1,7 @@
-#include <iosfwd>
+#pragma once
 
-typedef unsigned int uint;
+#include <iosfwd>
+#include <stdint.h>
 
 class Bitstream;
 
@@ -9,16 +10,16 @@ public:
 	Model();
 	~Model(){}
 
-	bool update(unsigned char c);
-	bool update(unsigned char c, int count);
+	bool update(uint8_t c);
+	bool update(uint8_t c, int count);
 	void digest();
 
-	uint calcUpper(unsigned char c, uint bot, uint top);
-	uint calcLower(unsigned char c, uint bot, uint top);
+	uint32_t calcUpper(uint8_t c, uint32_t bot, uint32_t top);
+	uint32_t calcLower(uint8_t c, uint32_t bot, uint32_t top);
 
-	unsigned char getChar(uint enc, uint bot, uint top);
-	uint getTotal();
-	uint getCharCount(unsigned char c);
+	uint8_t getChar(uint32_t enc, uint32_t bot, uint32_t top);
+	uint32_t getTotal();
+	uint32_t getCharCount(uint8_t c);
 
 	void reset();
 
@@ -26,8 +27,8 @@ public:
 	void importModel(std::istream& in);
 
 private:
-	uint freqs[256]; // 1 more than size of char; the last value is not used
-	uint total = 0;
+	uint32_t freqs[256]; // 1 more than size of char; the last value is not used
+	uint32_t total = 0;
 	bool digested = false;
 
 	void undigest();

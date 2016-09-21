@@ -1,27 +1,63 @@
-#include "ArEncoder.h>"
+#include "ArEncoder.h"
+#include "proto.h"
+#include "Model.h"
+
+#include <bitset> //tmp
+#include <iostream>
 
 ArEncoder::ArEncoder(Model* m, std::ostream* out){
 	this->m = m;
 	this->out = out;
+
 	bufcurs = 7;
 	buf = 0;
 	pending = 0;
+
+	top = 0xffffffff;
+	bot = 0x0;
 }
 
 ArEncoder::~ArEncoder(){
-	finish(); // TODO: leave this here or nah?
+	//finish(); // TODO: leave this here or nah?
 }
 
 /*
  * Encodes a character. 
  * If m and out are NULL, returns false. Otherwise, returns true.
  */
-bool ArEncoder::put(unsigned char c){
+bool ArEncoder::put(uint8_t c){
 	if (m == NULL || out == NULL){
 		return false;
 	}
 
-	//TODO
+	uint32_t tmp = top;
+	top = m->calcUpper(c, bot, top);
+	bot = m->calcLower(c, bot, tmp);
+
+	// While the first bit of top and bot are the same
+	while ((0x1 << (TYPESIZE - 1)) & ~(top ^ bot)){
+		std::cout << "Outputting " << (top >> (TYPESIZE - 1)) << std::endl;
+		outputBit(top >> (TYPESIZE - 1));
+		outputPending(top >> (TYPESIZE - 1));
+
+		// Left shift top, loading a 1 in
+		top <<= 1;
+		top |= 0x1;
+		// Left shift bot, loading a 0 in
+		bot <<= 1;
+	}
+
+	// While the second bit of bot is 1 and of top is 0
+	while ((0x1 << (TYPESIZE - 2)) & top < (0x1 << (TYPESIZE - 2)) & bot){//TODO make prettier
+		pending++;
+		// Remove the second bit of top
+		top = (top << 1) | (1 << (TYPESIZE- 1));
+		// Remove the second bit of bot
+		bot = (bot << 1) & !(1 << (TYPESIZE- 1));
+	}
+
+	std::cout << "top: " << std::bitset<32>(top) << std::endl;
+	std::cout << "bot: " << std::bitset<32>(bot) << std::endl;
 
 	return true;
 }
@@ -40,20 +76,21 @@ int ArEncoder::finish(){
 		return -1;
 	}
 
-	int ret = sizeof(uint) * 8 + pending + 7 - bufcurs;
+	int ret = TYPESIZE + pending + 7 - bufcurs;
 
 	// First bit of bot is always 0 - otherwise it would have converged
-	output(0);
+	outputBit(0);
 	outputPending(0);
 
 	// Output the rest of bot
 	bool cleared = false;
 	for(int i = 31; i >= 0; i--){
-		output((bot >> i) & 0b1);
+		cleared = outputBit((bot >> i) & 0b1);
 	}
 
+	std::cout << "Buf (" << (cleared ? "clean" : "dirty") << "): " << std::bitset<8>(buf) << std::endl;
 	if (!cleared){
-		out.put(buf);
+		out->put(buf);
 		buf = 0;
 		bufcurs = 7;
 	}
@@ -68,13 +105,15 @@ int ArEncoder::finish(){
  * Since it is private, it assumes that error checking on out
  * has already been done if it is being called.
  */
-bool ArEncoder::outputBit(char c){
+bool ArEncoder::outputBit(uint8_t c){
 	bool ret = false;
 	buf |= (c & 0b1) << bufcurs;
 	bufcurs--;
 
+	std::cout << "Buf: " << std::bitset<8>(buf) << std::endl;
+
 	if (bufcurs < 0){
-		out.put(buf);
+		out->put(buf);
 		buf = 0;
 		bufcurs = 7;
 		ret = true;
@@ -89,7 +128,7 @@ bool ArEncoder::outputBit(char c){
  * This is a private function so it is assumed that out has been
  * NULL checked if it is called.
  */
-int outputPending(char c){
+int ArEncoder::outputPending(uint8_t c){
 	int ret = pending;
 	while(pending > 0){
 		outputBit(~c & 0b1);

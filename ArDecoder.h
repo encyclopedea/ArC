@@ -1,6 +1,9 @@
+#ifndef ARDE_INCLUDED
+#define ARDE_INCLUDED
+
 #include <istream>
 
-#include "Model.h"
+class Model;
 
 // Flags
 const char STREAM_NULL		= 0b001;
@@ -13,17 +16,19 @@ public:
 	ArDecoder(Model* m, std::istream* in);
 	~ArDecoder();
 
-	unsigned char get();
+	uint8_t get();
 	bool good();
 private:
 	Model* m;
 	std::istream* in;
-	unsigned char buf;
+	uint8_t buf;
 	int bufcurs;
-	char flags;
-	unsigned int top;
-	unsigned int bot;
-	unsigned int cur;
+	uint8_t flags;
+	uint32_t top;
+	uint32_t bot;
+	uint32_t cur;
 
 	char getBit();
 };
+
+#endif

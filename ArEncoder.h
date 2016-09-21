@@ -1,23 +1,29 @@
-#include <ostream>
+#ifndef AREN_INCLUDED
+#define AREN_INCLUDED
 
-#include "Model.h"
+#include <ostream>
+#include <stdint.h>
+
+class Model;
 
 class ArEncoder{
 public:
 	ArEncoder(Model* m, std::ostream* out);
 	~ArEncoder();
 
-	bool put(unsigned char c);
+	bool put(uint8_t c);
 	int finish();
 private:
 	Model* m;
 	std::ostream* out;
-	unsigned char buf;
+	uint8_t buf;
 	int bufcurs;
 	int pending;
-	unsigned int top;
-	unsigned int bot;
+	uint32_t top;
+	uint32_t bot;
 
-	bool outputBit(char c);
-	int outputPending(char c);
+	bool outputBit(uint8_t c);
+	int outputPending(uint8_t c);
 };
+
+#endif
