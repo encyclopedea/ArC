@@ -1,0 +1,7 @@
+#ifndef PROTO_INCLUDED
+#define PROTO_INCLUDED
+
+#define TYPESIZE	32
+#define TYPESIZE_BYTES	4
+
+#endif

@@ -11,7 +11,7 @@ ArDecoder::ArDecoder(Model* m, std::istream* in){
 	this->in = in;
 
 	buf = 0;
-	bufcurs = 7;
+	bufcurs = 0;
 
 	flags = 0;
 
@@ -36,24 +36,32 @@ ArDecoder::ArDecoder(Model* m, std::istream* in){
 
 ArDecoder::~ArDecoder(){}
 
-uint8_t ArDecoder::get(){ //third round of test has issues
+uint8_t ArDecoder::get(){
 	if (flags & MODEL_NULL){
 		return 0;
 	}
 
 	// std::cout << "Cur: " << cur << std::endl;
 	uint8_t c = m->getChar(cur, bot, top);
+	// std::cout << "\nGot " << (int)c << std::endl;
+
+	// std::cout << "old top: " << top << std::endl;
+	// std::cout << "cur: " << cur << std::endl;
+	// std::cout << "old bot: " << bot << std::endl ;
 
 	uint32_t tmp = top;
 	top = m->calcUpper(c, bot, top);
 	bot = m->calcLower(c, bot, tmp);
 
 	// std::cout << "top: " << std::bitset<32>(top) << std::endl;
+	// std::cout << "cur: " << std::bitset<32>(cur) << std::endl;
 	// std::cout << "bot: " << std::bitset<32>(bot) << std::endl;
+	// std::cout << "new top: " << top << std::endl;
+	// std::cout << "new bot: " << bot << std::endl << std::endl;
 
 	// While the first bit of top and bot are the same
 	while ((0x1 << (TYPESIZE - 1)) & ~(top ^ bot)){
-		// std::cout << "Converged\n";
+		// std::cout << "Discarding " << (top >> (TYPESIZE - 1)) << std::endl;
 		top <<= 1;
 		top |= 0x1;
 		// Left shift bot, loading a 0 in
@@ -65,6 +73,7 @@ uint8_t ArDecoder::get(){ //third round of test has issues
 
 	// While the second bit of bot is 1 and of top is 0
 	while ((0x1 << (TYPESIZE_BYTES - 2)) & top < (0x1 << (TYPESIZE_BYTES - 2)) & bot){
+		// std::cout << "pending++\n";
 		// Remove the second bit of top
 		top = (top << 1) | (1 << (TYPESIZE_BYTES - 1));
 		// Remove the second bit of bot
@@ -97,15 +106,18 @@ char ArDecoder::getBit(){
 		return 0;
 	}
 
-	char ret = (buf >> bufcurs) & 0b1;
-
-	if (--bufcurs < 0){
+	if (bufcurs-- < 1){
 		if (in->good()){
 			buf = in->get();
+			bufcurs = 7;
 		} else{
 			flags |= STREAM_NOT_GOOD;
+			return 0;
 		}
 	}
+
+	char ret = (buf >> bufcurs) & 0b1;
+	// std::cout << "buffer: " << std::bitset<8>(buf) << " >> " << bufcurs << std::endl;
 
 	return ret;
 }

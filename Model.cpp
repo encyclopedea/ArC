@@ -71,7 +71,6 @@ void Model::undigest(){
 	}
 }
 
-#include <iostream> //tmp
 /*
  * Calculates the upper bound of c, given the restrictions top and bot.
  *
@@ -81,14 +80,29 @@ void Model::undigest(){
 uint32_t Model::calcUpper(uint8_t c, uint32_t bot, uint32_t top){
 	digest();
 
+	// // Determine the current range
+	// uint64_t range = (uint64_t)top - bot + 1;
+
+	// // Scale the top of the character onto the current range
+	// uint64_t num = freqs[c] * range;
+	// // std::cout << range << ", " << total << ", " << freqs[c] << std::endl;
+	// // Keep top inclusive
+	// return bot + num / total - ((num % total) ? 0 : 1);
+
+	// TODO: new stuff (see notebook)
+
 	// Determine the current range
-	uint64_t range = (uint64_t)top - bot + 1;
+	uint32_t range = top - bot;
 
 	// Scale the top of the character onto the current range
-	uint64_t num = freqs[c] * range;
-	// std::cout << range << ", " << total << ", " << freqs[c] << std::endl;
-	// Keep top inclusive
-	return num / total - ((num % total) ? 0 : 1); // TODO: what the hell am i doing?
+	// The freqs are inclusive, but top limit is exclusive, so add a 1
+	uint64_t num = ((uint64_t)freqs[c] + 1) * range;
+
+	// Finish the scaling with ceiling division to keep top exclusive
+	// Adding the given bot ensures that it is within the proper range
+	// total + 1 due to a shadow "not present" value
+	return bot + num / (total + 1) + ((num % (total + 1)) ? 1 : 0);
+
 }
 
 /*
@@ -100,14 +114,34 @@ uint32_t Model::calcUpper(uint8_t c, uint32_t bot, uint32_t top){
 uint32_t Model::calcLower(uint8_t c, uint32_t bot, uint32_t top){
 	digest();
 
+	// // Determine the current range
+	// uint64_t range = (uint64_t)top - bot + 1;
+
+	// // Scale the bottom of the character onto the current range
+	// uint64_t num = range * (c ? freqs[c - 1] : 0);
+	// // std::cout << range << ", " << total << ", " << (c ? freqs[c - 1] : 0) << std::endl;
+	// // Ceiling division to keep bot inclusive
+	// return bot + num / total + ((num % total) ? 1 : 0);
+
+	//TODO: new stuff (see notebook)
+
 	// Determine the current range
-	uint64_t range = (uint64_t)top - bot + 1;
+	uint32_t range = top - bot;
+
+	// If c is not 0, cannot check the previous character's frequency
+	// The previous character's frequency is inclusive, so add 1
+	uint64_t prev = c ? freqs[c - 1] + 1 : 1;
+
+	// std::cout << "<Range = " << range << ", prev = " << prev << ">\n";
+	// std::cout << "Bot = " << bot << std::endl;
 
 	// Scale the bottom of the character onto the current range
-	uint64_t num = range * (c ? freqs[c - 1] : 0);
-	// std::cout << range << ", " << total << ", " << (c ? freqs[c - 1] : 0) << std::endl;
-	// Ceiling division to keep bot inclusive
-	return num / total + ((num % total) ? 1 : 0);
+	uint64_t num = prev * range;
+
+	// Finish the scaling with ceiling divison to keep bot inclusive
+	// Adding the given bot ensures that it is within the proper range
+	// total + 1 due to a shadow "not present" value
+	return bot + num / (total + 1) + ((num % (total + 1)) ? 1 : 0); // TODO: change for 0 case
 }
 
 /*
@@ -123,30 +157,58 @@ uint8_t Model::getChar(uint32_t enc, uint32_t bot, uint32_t top){ // TODO: has i
 	// std::cout  << "top: " << top << std::endl;
 	// std::cout << "bot: " << bot << std::endl;
 
-	// Scale enc onto the total number of characters seen
-	uint64_t range = (uint64_t)top - bot + 1;
-	// std::cout << "range: " << range << std::endl;
-	enc = (uint64_t)(enc - bot) * total / range + 1;
+	// // Scale enc onto the total number of characters seen
+	// uint64_t range = (uint64_t)top - bot + 1;
+	// // std::cout << "range: " << range << std::endl;
+	// enc = (uint64_t)(enc - bot) * total / range + 1;
 
 	// std::cout  << "enc: " << enc << std::endl;
-	// Binary search freqs for the closest value <= c
+	// // Binary search freqs for the closest value <= c
+	// top = 0xFF;
+	// bot = 0x00;
+	// uint32_t mid;
+
+	// while (top > bot + 1){
+	// 	mid = (top + bot + 1) / 2;
+	// 	// std::cout << "(" << bot << ", " << mid << " (" << freqs[mid] << "), " << top << ")\n";
+	// 	if (freqs[mid] < enc){
+	// 		bot = mid;
+	// 	}
+	// 	else {
+	// 		top = mid;
+	// 	}
+	// }
+
+	// // std::cout << "Char value: " <<  top << std::endl;
+	// return top;	// The character corresponds directly to the index
+
+	//TODO: new stuff (see notebook)
+
+	// Scale enc onto the total number of characters seen
+	uint32_t range = top - bot;
+	// std::cout << "Enc (before): " << enc << std::endl;
+	// Instead of adding 1 to table, subtract 1 from enc to make inclusive
+	enc = (uint64_t)(enc - bot) * (total + 1) / range - 1;
+	// std::cout << "Enc (after): " << enc + 1 << std::endl;
+
+	// Binary search freqs for the closest value > c
 	top = 0xFF;
 	bot = 0x00;
 	uint32_t mid;
 
-	while (top > bot + 1){ //dis be fked up
-		mid = (top + bot + 1) / 2;
-		// std::cout << "(" << bot << ", " << mid << " (" << freqs[mid] << "), " << top << ")\n";
-		if (freqs[mid] < enc){
-			bot = mid;
-		}
-		else {
+	while (top > bot + 1){
+		mid = (top + bot) / 2;
+		if (freqs[mid] > enc){
 			top = mid;
+		} else if (freqs[mid] < enc){
+			bot = mid;
+		} else{
+			bot = mid;
 		}
 	}
 
-	// std::cout << "Char value: " <<  top << std::endl;
-	return top;	// The character corresponds directly to the index
+	// The index directly corresponds to the character
+	return top;
 }
 
 uint32_t Model::getTotal(){
