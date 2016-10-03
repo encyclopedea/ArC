@@ -27,7 +27,7 @@ public:
 	void importModel(std::istream& in);
 
 private:
-	uint32_t freqs[256]; // 1 more than size of char; the last value is not used
+	uint32_t freqs[256]; // range of uint_8
 	uint32_t total = 0;
 	bool digested = false;
 

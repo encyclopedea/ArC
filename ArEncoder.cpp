@@ -15,11 +15,9 @@ ArEncoder::ArEncoder(Model* m, std::ostream* out){
 
 	top = 0xffffffff;
 	bot = 0x0;
-}
+} // TODO: create start method that encodes the model
 
-ArEncoder::~ArEncoder(){
-	//finish(); // TODO: leave this here or nah?
-}
+ArEncoder::~ArEncoder(){}
 
 /*
  * Encodes a character. 

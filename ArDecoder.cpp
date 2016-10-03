@@ -27,12 +27,11 @@ ArDecoder::ArDecoder(Model* m, std::istream* in){
 		for (int i = TYPESIZE_BYTES - 1; i >= 0; i--){
 			c[i] = in->get();
 		}
-		std::cout << cur << std::endl;
 	}
 
 	top = ~0;
 	bot = 0;
-}
+} // TODO: create start method that reads into cur and imports the model
 
 ArDecoder::~ArDecoder(){}
 
@@ -41,39 +40,31 @@ uint8_t ArDecoder::get(){
 		return 0;
 	}
 
-	// std::cout << "Cur: " << cur << std::endl;
 	uint8_t c = m->getChar(cur, bot, top);
-	// std::cout << "\nGot " << (int)c << std::endl;
-
-	// std::cout << "old top: " << top << std::endl;
-	// std::cout << "cur: " << cur << std::endl;
-	// std::cout << "old bot: " << bot << std::endl ;
 
 	uint32_t tmp = top;
 	top = m->calcUpper(c, bot, top);
 	bot = m->calcLower(c, bot, tmp);
 
-	// std::cout << "top: " << std::bitset<32>(top) << std::endl;
-	// std::cout << "cur: " << std::bitset<32>(cur) << std::endl;
-	// std::cout << "bot: " << std::bitset<32>(bot) << std::endl;
-	// std::cout << "new top: " << top << std::endl;
-	// std::cout << "new bot: " << bot << std::endl << std::endl;
 
 	// While the first bit of top and bot are the same
 	while ((0x1 << (TYPESIZE - 1)) & ~(top ^ bot)){
-		// std::cout << "Discarding " << (top >> (TYPESIZE - 1)) << std::endl;
+		// Discard the first bit of top, bot, cur
+
+		// Load 1 into top
 		top <<= 1;
 		top |= 0x1;
-		// Left shift bot, loading a 0 in
+
+		// Load 0 into bot
 		bot <<= 1;
-		// Left shift cur, loading a new encoded bit in
+
+		// Load bit from stream into cur
 		cur <<= 1;
 		cur |= getBit() & 0x1;
 	}
 
 	// While the second bit of bot is 1 and of top is 0
 	while ((0x1 << (TYPESIZE_BYTES - 2)) & top < (0x1 << (TYPESIZE_BYTES - 2)) & bot){
-		// std::cout << "pending++\n";
 		// Remove the second bit of top
 		top = (top << 1) | (1 << (TYPESIZE_BYTES - 1));
 		// Remove the second bit of bot
@@ -117,7 +108,6 @@ char ArDecoder::getBit(){
 	}
 
 	char ret = (buf >> bufcurs) & 0b1;
-	// std::cout << "buffer: " << std::bitset<8>(buf) << " >> " << bufcurs << std::endl;
 
 	return ret;
 }
