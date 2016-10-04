@@ -2,8 +2,6 @@
 #include "proto.h"
 #include "Model.h"
 
-#include <istream>
-
 ArDecoder::ArDecoder(Model* m, std::istream* in){
 	this->m = m;
 	this->in = in;

@@ -2,6 +2,7 @@
 #define ARDE_INCLUDED
 
 #include <istream>
+#include <stdint.h>
 
 class Model;
 

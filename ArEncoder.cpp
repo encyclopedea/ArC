@@ -2,8 +2,6 @@
 #include "proto.h"
 #include "Model.h"
 
-#include <ostream>
-
 ArEncoder::ArEncoder(Model* m, std::ostream* out){
 	this->m = m;
 	this->out = out;
