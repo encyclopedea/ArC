@@ -4,6 +4,9 @@
 #include <iostream>
 
 Model::Model(){
+	total = 0;
+	digested = false;
+
 	for (int i = 0; i < 256; i++){
 		freqs[i] = 0;
 	}
@@ -79,17 +82,24 @@ void Model::undigest(){
 uint32_t Model::calcUpper(uint8_t c, uint32_t bot, uint32_t top){
 	digest();
 
+	// If c is not 0, cannot check the previous character's frequency
+	uint32_t prev = c ? freqs[c - 1] : 0;
+	// If this character has no slots, return the shadow "not present" value
+	if (prev == freqs[c]){
+		return 0;
+	}
+
 	// Determine the current range
 	uint32_t range = top - bot;
 
-	// Scale the top of the character onto the current range
-	// The freqs are inclusive, but top limit is exclusive, so add a 1
+	/* Scale the top of the character onto the current range
+	   The freqs are inclusive, but top limit is exclusive, so add a 1 */
 	uint64_t num = ((uint64_t)freqs[c] + 1) * range;
 
-	// Finish the scaling with ceiling division to keep top exclusive
-	// Adding the given bot ensures that it is within the proper range
-	// total + 1 due to a shadow "not present" value
-	return bot + num / (total + 1) + ((num % (total + 1)) ? 1 : 0); // TODO: change for 0 case
+	/* Finish the scaling with ceiling division to keep top exclusive
+	   Adding the given bot ensures that it is within the proper range
+	   total + 1 due to a shadow "not present" value					*/
+	return bot + num / (total + 1) + ((num % (total + 1)) ? 1 : 0);
 
 }
 
@@ -102,15 +112,19 @@ uint32_t Model::calcUpper(uint8_t c, uint32_t bot, uint32_t top){
 uint32_t Model::calcLower(uint8_t c, uint32_t bot, uint32_t top){
 	digest();
 
+	// If c is not 0, cannot check the previous character's frequency
+	uint32_t prev = c ? freqs[c - 1] : 0;
+	// If this character has no slots, return the shadow "not present" value
+	if (prev == freqs[c]){
+		return 0;
+	}
+
 	// Determine the current range
 	uint32_t range = top - bot;
 
-	// If c is not 0, cannot check the previous character's frequency
-	// The previous character's frequency is inclusive, so add 1
-	uint64_t prev = c ? freqs[c - 1] + 1 : 1;
-
 	// Scale the bottom of the character onto the current range
-	uint64_t num = prev * range;
+	// The previous character's frequency is inclusive, so add 1
+	uint64_t num = ((uint64_t)prev + 1) * range;
 
 	// Finish the scaling with ceiling divison to keep bot inclusive
 	// Adding the given bot ensures that it is within the proper range
@@ -129,28 +143,27 @@ uint8_t Model::getChar(uint32_t enc, uint32_t bot, uint32_t top){ // TODO: has i
 
 	// Scale enc onto the total number of characters seen
 	uint32_t range = top - bot;
-
-	// Instead of adding 1 to table, subtract 1 from enc to make inclusive
-	enc = (uint64_t)(enc - bot) * (total + 1) / range - 1;
+	enc = (uint64_t)(enc - bot) * (total + 1) / range;
 
 	// Binary search freqs for the closest value > c
-	top = 0xFF;
-	bot = 0x00; // TODO: bot is not inclusive, so NULL can never be reached
-	uint32_t mid;
+	int upper = 0xFF;	// Inclusive
+	int lower = -1; 	// Exclusive
+	int mid;
 
-	while (top > bot + 1){
-		mid = (top + bot) / 2;
-		if (freqs[mid] > enc){
-			top = mid;
-		} else if (freqs[mid] < enc){
-			bot = mid;
+	// A 1 is added to the entries to account for a shadow "not present" value
+	while (upper > lower + 1){
+		mid = (upper + lower) / 2;
+		if (freqs[mid] + 1 > enc){
+			upper = mid;
+		} else if (freqs[mid] + 1 < enc){
+			lower = mid;
 		} else{
-			bot = mid;
+			lower = mid;
 		}
 	}
 
 	// The index directly corresponds to the symbol
-	return top;
+	return upper;
 }
 
 uint32_t Model::getTotal(){

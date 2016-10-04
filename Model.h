@@ -28,8 +28,8 @@ public:
 
 private:
 	uint32_t freqs[256]; // range of uint_8
-	uint32_t total = 0;
-	bool digested = false;
+	uint32_t total;
+	bool digested;
 
 	void undigest();
 };

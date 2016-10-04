@@ -31,9 +31,13 @@ ArDecoder::ArDecoder(Model* m, std::istream* in){
 
 	top = ~0;
 	bot = 0;
-} // TODO: create start method that reads into cur and imports the model
+} // TODO: create start method that reads into cur?
 
 ArDecoder::~ArDecoder(){}
+
+void start(){
+
+}
 
 uint8_t ArDecoder::get(){
 	if (flags & MODEL_NULL){
@@ -76,8 +80,8 @@ uint8_t ArDecoder::get(){
 
 /*
  * Returns the internal flags. 
- * If STREAM_NULL or MODEL_NULL are set, all get calls will fail.
- * If STREAM_NOT_GOOD is set, get calls may continue, but may result in 
+ * If STREAM_NULL or MODEL_NULL are set, all get() calls will fail.
+ * If STREAM_NOT_GOOD is set, get() calls may continue, but may result in 
  * undefined behavior after an unspecified number of get calls.
  */
 bool ArDecoder::good(){

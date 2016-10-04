@@ -13,8 +13,9 @@ Usage:
     * Alternatively, the frequency counts can be simplified, reduced, expanded, or otherwise changed to fit within the limitations.
   * A Model can be reused by use of its reset() method.
   * Models are not automatically imported or exported by any other class. It is up to the developer to import or export Models.
+  * NULL always has at least one slot, since it is used for encoding symbols with frequencies of 0. This cannot be changed by calling update().
 * ArEncoder
-  * ArEncoder must call finish() when done encoding, or up to 39 bits remain in its internal buffers without being output, resulting in lost characters.
+  * ArEncoder must call finish() when done encoding, or up to 39 bits will remain in its internal buffers without being output, resulting in lost characters.
 * ArDecoder
   * ArDecoder begins reading from the input stream on construction.
   * ArDecoder does not know when to stop. It is up to the developer to decide a stopping condition and stop decoding characters.
