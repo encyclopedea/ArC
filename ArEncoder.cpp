@@ -2,8 +2,7 @@
 #include "proto.h"
 #include "Model.h"
 
-#include <bitset> //tmp
-#include <iostream>
+#include <ostream>
 
 ArEncoder::ArEncoder(Model* m, std::ostream* out){
 	this->m = m;

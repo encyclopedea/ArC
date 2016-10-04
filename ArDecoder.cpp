@@ -2,9 +2,7 @@
 #include "proto.h"
 #include "Model.h"
 
-#include <iostream>
-#include <bitset>//tmp
-
+#include <istream>
 
 ArDecoder::ArDecoder(Model* m, std::istream* in){
 	this->m = m;
