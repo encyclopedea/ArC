@@ -27,13 +27,9 @@ ArDecoder::ArDecoder(Model* m, std::istream* in){
 
 	top = ~0;
 	bot = 0;
-} // TODO: create start method that reads into cur?
+} 
 
 ArDecoder::~ArDecoder(){}
-
-void start(){
-
-}
 
 uint8_t ArDecoder::get(){
 	if (flags & MODEL_NULL){
