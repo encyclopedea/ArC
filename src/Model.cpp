@@ -112,7 +112,7 @@ uint32_t Model::calcUpper(uint8_t c, uint32_t bot, uint32_t top){
 uint32_t Model::calcLower(uint8_t c, uint32_t bot, uint32_t top){
 	digest();
 
-	// If c is not 0, cannot check the previous character's frequency
+	// If c is 0, cannot check the previous character's frequency
 	uint32_t prev = c ? freqs[c - 1] : 0;
 	// If this character has no slots, return the shadow "not present" value
 	if (prev == freqs[c]){
@@ -129,7 +129,7 @@ uint32_t Model::calcLower(uint8_t c, uint32_t bot, uint32_t top){
 	// Finish the scaling with ceiling divison to keep bot inclusive
 	// Adding the given bot ensures that it is within the proper range
 	// total + 1 due to a shadow "not present" value
-	return bot + num / (total + 1) + ((num % (total + 1)) ? 1 : 0); // TODO: change for 0 case
+	return bot + num / (total + 1) + ((num % (total + 1)) ? 1 : 0);
 }
 
 /*
@@ -138,7 +138,7 @@ uint32_t Model::calcLower(uint8_t c, uint32_t bot, uint32_t top){
  * If the model has not already been digested, getChar() digests it before
  * doing calculations.
  */
-uint8_t Model::getChar(uint32_t enc, uint32_t bot, uint32_t top){ // TODO: has issues if enc is 0
+uint8_t Model::getChar(uint32_t enc, uint32_t bot, uint32_t top){
 	digest();
 
 	// Scale enc onto the total number of characters seen

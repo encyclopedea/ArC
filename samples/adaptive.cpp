@@ -73,8 +73,13 @@ int encode(std::string inputFile, std::string outputFile){
 	std::ifstream ifs(inputFile.c_str());
 	std::ofstream ofs(outputFile.c_str());
 
-	if (!(ifs.good() && ofs.good())){
-		std::cout << "Error opening files for input/output.\n";
+	if (!ifs.good()){
+		std::cout << "Error opening file for input.\n";
+		return 1;
+	}
+
+	if (!ofs.good()){
+		std::cout << "Error opening file for output.\n";
 		return 1;
 	}
 

@@ -12,7 +12,7 @@ ArEncoder::ArEncoder(Model* m, std::ostream* out){
 
 	top = 0xffffffff;
 	bot = 0x0;
-} // TODO: create start method that encodes the model
+}
 
 ArEncoder::~ArEncoder(){}
 
@@ -25,21 +25,12 @@ bool ArEncoder::put(uint8_t c){
 		return false;
 	}
 
-	// std::cout << "\nold top: " << top << std::endl;
-	// std::cout << "old bot: " << bot << std::endl;
-
 	uint32_t tmp = top;
 	top = m->calcUpper(c, bot, top);
 	bot = m->calcLower(c, bot, tmp);
 
-	// std::cout << "top: " << std::bitset<32>(top) << std::endl;
-	// std::cout << "bot: " << std::bitset<32>(bot) << std::endl;
-	// std::cout << "new top: " << top << std::endl;
-	// std::cout << "new bot: " << bot << std::endl << std::endl;
-
 	// While the first bit of top and bot are the same
 	while ((0x1 << (TYPESIZE - 1)) & ~(top ^ bot)){
-		// std::cout << "Outputting " << (top >> (TYPESIZE - 1)) << std::endl;
 		outputBit(top >> (TYPESIZE - 1));
 		outputPending(top >> (TYPESIZE - 1));
 
@@ -51,8 +42,7 @@ bool ArEncoder::put(uint8_t c){
 	}
 
 	// While the second bit of bot is 1 and of top is 0
-	while ((0x1 << (TYPESIZE - 2)) & top < (0x1 << (TYPESIZE - 2)) & bot){//TODO make work
-		// std::cout << "pending++\n";
+	while ((0x1 << (TYPESIZE - 2)) & top < (0x1 << (TYPESIZE - 2)) & bot){
 		pending++;
 		// Remove the second bit of top
 		top = (top << 1) | (1 << (TYPESIZE- 1));
@@ -89,7 +79,6 @@ int ArEncoder::finish(){
 		cleared = outputBit((bot >> i) & 0b1);
 	}
 
-	// std::cout << "Buf (" << (cleared ? "clean" : "dirty") << "): " << std::bitset<8>(buf) << std::endl;
 	if (!cleared){
 		out->put(buf);
 		buf = 0;
@@ -110,8 +99,6 @@ bool ArEncoder::outputBit(uint8_t c){
 	bool ret = false;
 	buf |= (c & 0b1) << bufcurs;
 	bufcurs--;
-
-	// std::cout << "Buf: " << std::bitset<8>(buf) << std::endl;
 
 	if (bufcurs < 0){
 		out->put(buf);
