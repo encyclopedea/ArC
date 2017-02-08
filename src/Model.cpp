@@ -94,7 +94,7 @@ uint32_t Model::calcUpper(uint8_t c, uint32_t bot, uint32_t top){
 
 	/* Scale the top of the character onto the current range
 	   The freqs are inclusive, but top limit is exclusive, so add a 1
-	   Also, add another 1 for the shadow "not present" value			 */
+	   Also, add another 1 for the shadow "not present" value at 0			 */
 	uint64_t num = ((uint64_t)freqs[c] + 1) * range;
 
 	/* Finish the scaling with ceiling division to keep top exclusive
@@ -128,7 +128,7 @@ uint32_t Model::calcLower(uint8_t c, uint32_t bot, uint32_t top){
 
 	// Finish the scaling with ceiling divison to keep bot inclusive
 	// Adding the given bot ensures that it is within the proper range
-	// total + 1 due to a shadow "not present" value
+	// total + 1 due to a shadow "not present" value at 0
 	return bot + num / (total + 1) + ((num % (total + 1)) ? 1 : 0);
 }
 
@@ -150,7 +150,7 @@ uint8_t Model::getChar(uint32_t enc, uint32_t bot, uint32_t top){
 	int lower = -1; 	// Exclusive
 	int mid;
 
-	// A 1 is added to the entries to account for a shadow "not present" value
+	// A 1 is added to the entries to account for a shadow "not present" value at 0
 	while (upper > lower + 1){
 		mid = (upper + lower) / 2;
 		if (freqs[mid] + 1 > enc){
@@ -161,8 +161,6 @@ uint8_t Model::getChar(uint32_t enc, uint32_t bot, uint32_t top){
 			lower = mid;
 		}
 	}
-
-	std::cout << "Found char " << (unsigned int) upper << " in range [ " << (upper ? freqs[upper - 1] + 1 : 0) << ", " << freqs[upper] + 1 << " )\n";
 
 	// The index directly corresponds to the symbol
 	return upper;

@@ -1,8 +1,6 @@
 #include "ArDecoder.h"
 #include "proto.h"
 #include "Model.h"
-#include <iostream> // tmp
-#include <bitset> //tmp
 
 ArDecoder::ArDecoder(Model* m, std::istream* in){
 	this->m = m;
@@ -43,15 +41,9 @@ uint8_t ArDecoder::get(){
 	top = m->calcUpper(c, bot, top);
 	bot = m->calcLower(c, bot, tmp);
 
-	std::cout << "bot before all: " << std::bitset<32>(bot) << std::endl;
-	std::cout << "top before all: " << std::bitset<32>(top) << std::endl;
-	std::cout << "cur before all: " << std::bitset<32>(cur) << std::endl;
-
-
 	// While the first bit of top and bot are the same
 	while ((0x1 << (TYPESIZE - 1)) & ~(top ^ bot)){
 		// Discard the first bit of top, bot, cur
-		std::cout << "Discarding " << (top >> (TYPESIZE - 1)) << std::endl;
 
 		// Load 1 into top
 		top <<= 1;
@@ -65,32 +57,21 @@ uint8_t ArDecoder::get(){
 		cur |= getBit() & 0x1;
 	}
 
-	std::cout << "bot before convergence: " << std::bitset<32>(bot) << std::endl;
-	std::cout << "top before convergence: " << std::bitset<32>(top) << std::endl;
-	std::cout << "cur before convergence: " << std::bitset<32>(cur) << std::endl;
-
 	// While the second bit of bot is 1 and of top is 0
 	while (((0x1 << (TYPESIZE - 2)) & top) < ((0x1 << (TYPESIZE - 2)) & bot)){
-		std::cout << "Removing convergence\n";
-		// Remove the second bit of top and load a 1 in back
+
+		// Remove the second bit of top and load a 1 in the back
 		top = (top << 1) | (1 << (TYPESIZE - 1));
 		top |= 0x1;
-		// Remove the second bit of bot and load a 0 in back
+
+		// Remove the second bit of bot and leave a 0 in back
 		bot = (bot << 1) & ~(1 << (TYPESIZE - 1));
 
-		// 1stbit = cur & (cur & (0x1 << (TYPESIZE - 1)))
-		// shift cur, wipe 1st bit, then 
-		cur = ((cur << 1) & ~(1 << (TYPESIZE - 1))) | (cur & (0x1 << (TYPESIZE - 1)));
+		// Remove the second bit of bot
+		cur <<= 1;						// Second bit is opposite of first bit so don't lose it
+		cur ^= 0x1 << (TYPESIZE - 1);	// Restore the first bit by inverting the new first bit
 		cur |= getBit() & 0x1;
 	}
-
-	std::cout << "  " << cur << " in";
-	std::cout << "\n[ " << bot << ", " << top << " )\n";
-
-	std::cout << "bot after all: " << std::bitset<32>(bot) << std::endl;
-	std::cout << "top after all: " << std::bitset<32>(top) << std::endl;
-	std::cout << "cur after all: " << std::bitset<32>(cur) << std::endl;
-		std::cout << std::endl;
 
 	return c;
 }

@@ -63,8 +63,8 @@ int main(int argc, char** argv){
 void printHelpMsg(){
 	std::cout << "Usage: adaptive_sample <input file> <output file> -opts\n";
 	std::cout << "Options:";
-	std::cout << "\n\t-e\tencode";
-	std::cout << "\n\t-d\tdecode";
+	std::cout << "\n	-e	encode";
+	std::cout << "\n	-d	decode";
 	std::cout << "\nExactly one of -d and -e should be specified.\n";
 }
 
@@ -93,8 +93,10 @@ int encode(std::string inputFile, std::string outputFile){
 		m.update(i);
 	}
 
+	int i = 0;
 	char c = ifs.get();
 	while (ifs.good()){
+		i++;
 		are.put(c);
 		m.update(c);
 		c = ifs.get();
@@ -106,6 +108,8 @@ int encode(std::string inputFile, std::string outputFile){
 	are.finish();
 
 	// END USAGE OF LIBRARY
+
+	std::cout << "Encoded " << i << " characters.\n";
 
 	return 0;
 }
@@ -138,15 +142,18 @@ int decode(std::string inputFile, std::string outputFile){
 		m.update(i);
 	}
 
+	int i = 0;
 	char c;
 	c = ard.get();
 	while (c != 0x04){ // While an EOT has not been read
+		i++;
 		m.update(c);
 		ofs.put(c);
 		c = ard.get();
 	}
-
 	// END USAGE OF LIBRARY
+
+	std::cout << "Decoded " << i << " characters.\n";
 
 	return 0;
 }

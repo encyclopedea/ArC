@@ -1,8 +1,6 @@
 #include "ArEncoder.h"
 #include "proto.h"
 #include "Model.h"
-#include <iostream> // tmp
-#include <bitset> // tmp
 
 ArEncoder::ArEncoder(Model* m, std::ostream* out){
 	this->m = m;
@@ -31,14 +29,9 @@ bool ArEncoder::put(uint8_t c){
 	top = m->calcUpper(c, bot, top);
 	bot = m->calcLower(c, bot, tmp);
 
-	std::cout << "char " << (unsigned int) c << " in [ " << (c ? m->getCharCount(c - 1) + 1 : 0) << ", " << m->getCharCount(c) + 1 << " )\n";
-	std::cout << "bot before all: " << std::bitset<32>(bot) << std::endl;
-	std::cout << "top before all: " << std::bitset<32>(top) << std::endl;
-
-
 	// While the first bit of top and bot are the same
 	while ((0x1 << (TYPESIZE - 1)) & ~(top ^ bot)){
-		std::cout << "Outputting " << (top >> (TYPESIZE - 1)) << std::endl;
+		// std::cout << "Outputting " << (top >> (TYPESIZE - 1)) << std::endl;
 		outputBit(top >> (TYPESIZE - 1));
 		outputPending(top >> (TYPESIZE - 1));
 
@@ -49,23 +42,17 @@ bool ArEncoder::put(uint8_t c){
 		bot <<= 1;
 	}
 
-	std::cout << "bot before convergence: " << std::bitset<32>(bot) << std::endl;
-	std::cout << "top before convergence: " << std::bitset<32>(top) << std::endl;
-
 	// While the second bit of bot is 1 and of top is 0
 	while (((0x1 << (TYPESIZE - 2)) & top) < ((0x1 << (TYPESIZE - 2)) & bot)){
-		std::cout << "removing convergence\n";
 		pending++;
-		// Remove the second bit of top and load a 1 in
-		top = (top << 1) | (1 << (TYPESIZE - 1)) | 0x1;
-		// Remove the second bit of bot and load a 0 in
+
+		// Remove the second bit of top and load a 1 in the back
+		top = (top << 1) | (1 << (TYPESIZE - 1));
+		top |= 1;
+
+		// Remove the second bit of bot and leave a 0 in the back
 		bot = (bot << 1) & ~(1 << (TYPESIZE - 1));
 	}
-
-	std::cout << "[ " << bot << ", " << top << " )\n";
-	std::cout << "bot after all: " << std::bitset<32>(bot) << std::endl;
-	std::cout << "top after all: " << std::bitset<32>(top) << std::endl;
-		std::cout << std::endl;
 
 	return true;
 }
