@@ -82,23 +82,23 @@ void Model::undigest(){
 uint32_t Model::calcUpper(uint8_t c, uint32_t bot, uint32_t top){
 	digest();
 
-	// If c is not 0, cannot check the previous character's frequency
+	// If c is 0, cannot check the previous character's frequency
 	uint32_t prev = c ? freqs[c - 1] : 0;
 	// If this character has no slots, return the shadow "not present" value
 	if (prev == freqs[c]){
-		return 0;
+		return 1;
 	}
 
 	// Determine the current range
 	uint32_t range = top - bot;
 
 	/* Scale the top of the character onto the current range
-	   The freqs are inclusive, but top limit is exclusive, so add a 1 */
+	   The freqs are inclusive, but top limit is exclusive, so add a 1
+	   Also, add another 1 for the shadow "not present" value			 */
 	uint64_t num = ((uint64_t)freqs[c] + 1) * range;
 
 	/* Finish the scaling with ceiling division to keep top exclusive
-	   Adding the given bot ensures that it is within the proper range
-	   total + 1 due to a shadow "not present" value					*/
+	   Adding the given bot ensures that it is within the proper range	*/
 	return bot + num / (total + 1) + ((num % (total + 1)) ? 1 : 0);
 
 }
@@ -116,7 +116,7 @@ uint32_t Model::calcLower(uint8_t c, uint32_t bot, uint32_t top){
 	uint32_t prev = c ? freqs[c - 1] : 0;
 	// If this character has no slots, return the shadow "not present" value
 	if (prev == freqs[c]){
-		return 0;
+		return bot;
 	}
 
 	// Determine the current range
@@ -161,6 +161,8 @@ uint8_t Model::getChar(uint32_t enc, uint32_t bot, uint32_t top){
 			lower = mid;
 		}
 	}
+
+	std::cout << "Found char " << (unsigned int) upper << " in range [ " << (upper ? freqs[upper - 1] + 1 : 0) << ", " << freqs[upper] + 1 << " )\n";
 
 	// The index directly corresponds to the symbol
 	return upper;

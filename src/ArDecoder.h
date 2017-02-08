@@ -18,7 +18,7 @@ public:
 	~ArDecoder();
 
 	uint8_t get();
-	bool good();
+	uint8_t getFlags();
 private:
 	Model* m;
 	std::istream* in;
