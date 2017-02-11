@@ -2,9 +2,9 @@
 #include "proto.h"
 #include "Model.h"
 
-ArDecoder::ArDecoder(Model* m, std::istream* in){
-	this->m = m;
-	this->in = in;
+ArDecoder::ArDecoder(Model* model, std::istream* instream){
+	m = model;
+	in = instream;
 
 	buf = 0;
 	bufcurs = 0;
@@ -109,7 +109,7 @@ char ArDecoder::getBit(){
 		}
 	}
 
-	char ret = (buf >> bufcurs) & 0b1;
+	char ret = (buf >> bufcurs) & 0x1;
 
 	return ret;
 }

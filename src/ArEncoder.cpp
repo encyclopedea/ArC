@@ -2,9 +2,9 @@
 #include "proto.h"
 #include "Model.h"
 
-ArEncoder::ArEncoder(Model* m, std::ostream* out){
-	this->m = m;
-	this->out = out;
+ArEncoder::ArEncoder(Model* model, std::ostream* outstream){
+	m = model;
+	out = outstream;
 
 	bufcurs = 7;
 	buf = 0;
@@ -80,7 +80,7 @@ int ArEncoder::finish(){
 	// Output the rest of bot
 	bool cleared = false;
 	for(int i = 30; i >= 0; i--){
-		cleared = outputBit((bot >> i) & 0b1);
+		cleared = outputBit((bot >> i) & 0x1);
 	}
 
 	if (!cleared){
@@ -101,7 +101,7 @@ int ArEncoder::finish(){
  */
 bool ArEncoder::outputBit(uint8_t c){
 	bool ret = false;
-	buf |= (c & 0b1) << bufcurs;
+	buf |= (c & 0x1) << bufcurs;
 	bufcurs--;
 
 	if (bufcurs < 0){
@@ -123,7 +123,7 @@ bool ArEncoder::outputBit(uint8_t c){
 int ArEncoder::outputPending(uint8_t c){
 	int ret = pending;
 	while(pending > 0){
-		outputBit(~c & 0b1);
+		outputBit(~c & 0x1);
 		pending--;
 	}
 	return ret;

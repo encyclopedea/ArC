@@ -7,9 +7,9 @@
 class Model;
 
 // Flags
-const char STREAM_NULL		= 0b001;
-const char MODEL_NULL		= 0b010;
-const char STREAM_NOT_GOOD	= 0b100;
+const char STREAM_NULL		= 0x1;
+const char MODEL_NULL		= 0x2;
+const char STREAM_NOT_GOOD	= 0x4;
 
 
 class ArDecoder{

@@ -19,10 +19,16 @@ Model::Model(){
  * time.
  */
 bool Model::update(uint8_t c){
-	update(c, 1);
+	return update(c, 1);
 }
 
 bool Model::update(uint8_t c, int count){
+	// Prevent exceeding 31 bits of precision
+	if (((uint32_t) 0x1 << 31) - 1 - count < total){
+		std::cout << "UHOH\n";
+		return false;
+	}
+
 	freqs[c] += count;		// Increment the character's frequency
 	total += count;			// Increment the total size
 
@@ -32,6 +38,8 @@ bool Model::update(uint8_t c, int count){
 			freqs[i] += count;
 		}
 	}
+
+	return true;
 }
 
 /*

@@ -163,9 +163,11 @@ void putHeader(std::ofstream& ofs){
 }
 
 int checkHeader(std::istream& ifs){
-	char buf[header.length() + 1];
+	char* buf = new char[header.length() + 1];
 	ifs.read(buf, header.length());
 	buf[header.length()] = '\0'; // Null terminate
 
-	return header == std::string(buf);
+	int ret = (header == std::string(buf));
+	delete[] buf;
+	return ret;
 }
