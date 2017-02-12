@@ -1,6 +1,9 @@
 #include "ArDecoder.h"
 #include "proto.h"
 #include "Model.h"
+#include <iostream> // tmp
+#include <bitset> //tmp
+
 
 ArDecoder::ArDecoder(Model* model, std::istream* instream){
 	m = model;
@@ -109,7 +112,5 @@ char ArDecoder::getBit(){
 		}
 	}
 
-	char ret = (buf >> bufcurs) & 0x1;
-
-	return ret;
+	return (buf >> bufcurs) & 0x1;
 }

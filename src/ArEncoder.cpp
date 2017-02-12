@@ -18,7 +18,8 @@ ArEncoder::~ArEncoder(){}
 
 /*
  * Encodes a character. 
- * If m and out are NULL, returns false. Otherwise, returns true.
+ * If m or out are NULL, returns false and does not encode. 
+ * Otherwise, returns true.
  */
 bool ArEncoder::put(uint8_t c){
 	if (m == NULL || out == NULL){
@@ -31,7 +32,6 @@ bool ArEncoder::put(uint8_t c){
 
 	// While the first bit of top and bot are the same
 	while ((0x1 << (TYPESIZE - 1)) & ~(top ^ bot)){
-		// std::cout << "Outputting " << (top >> (TYPESIZE - 1)) << std::endl;
 		outputBit(top >> (TYPESIZE - 1));
 		outputPending(top >> (TYPESIZE - 1));
 

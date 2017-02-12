@@ -3,6 +3,8 @@
 
 #include <iostream>
 
+#define CEIL_DIV(x,y) ( (x) / (y) + (((x) % (y)) ? 1 : 0) )
+
 Model::Model(){
 	total = 0;
 	digested = false;
@@ -94,20 +96,16 @@ uint32_t Model::calcUpper(uint8_t c, uint32_t bot, uint32_t top){
 	uint32_t prev = c ? freqs[c - 1] : 0;
 	// If this character has no slots, return the shadow "not present" value
 	if (prev == freqs[c]){
-		return 1;
+		return bot + 1;
 	}
 
-	// Determine the current range
-	uint32_t range = top - bot;
+	// Find the scaling factor
+	// Add 1 for the shadow "not present" value at 0
+	uint32_t conversion = (top - bot) / (total + 1);
 
-	/* Scale the top of the character onto the current range
-	   The freqs are inclusive, but top limit is exclusive, so add a 1
-	   Also, add another 1 for the shadow "not present" value at 0			 */
-	uint64_t num = ((uint64_t)freqs[c] + 1) * range;
-
-	/* Finish the scaling with ceiling division to keep top exclusive
-	   Adding the given bot ensures that it is within the proper range	*/
-	return bot + num / (total + 1) + ((num % (total + 1)) ? 1 : 0);
+	// Adding the given bot ensures that it is within the proper range
+	// total + 1 due to a shadow "not present" value at 0
+	return bot + (freqs[c] + 1) * conversion;
 
 }
 
@@ -127,17 +125,14 @@ uint32_t Model::calcLower(uint8_t c, uint32_t bot, uint32_t top){
 		return bot;
 	}
 
-	// Determine the current range
-	uint32_t range = top - bot;
+	// Find the scaling factor
+	// Add 1 to total for the shadow "not present" value at 0
+	uint32_t conversion = (top - bot) / (total + 1); 
+	
 
-	// Scale the bottom of the character onto the current range
-	// The previous character's frequency is inclusive, so add 1
-	uint64_t num = ((uint64_t)prev + 1) * range;
-
-	// Finish the scaling with ceiling divison to keep bot inclusive
 	// Adding the given bot ensures that it is within the proper range
 	// total + 1 due to a shadow "not present" value at 0
-	return bot + num / (total + 1) + ((num % (total + 1)) ? 1 : 0);
+	return bot + (prev + 1) * conversion;
 }
 
 /*
@@ -150,8 +145,8 @@ uint8_t Model::getChar(uint32_t enc, uint32_t bot, uint32_t top){
 	digest();
 
 	// Scale enc onto the total number of characters seen
-	uint32_t range = top - bot;
-	enc = (uint64_t)(enc - bot) * (total + 1) / range;
+	uint32_t conversion = (top - bot) / (total + 1);
+	enc = (enc - bot) / conversion;
 
 	// Binary search freqs for the closest value > c
 	int upper = 0xFF;	// Inclusive
@@ -179,6 +174,9 @@ uint32_t Model::getTotal(){
 }
 
 uint32_t Model::getCharCount(uint8_t c){
+	if (digested && c > 0){
+		return freqs[c] - freqs[c - 1];
+	}
 	return freqs[c];
 }
 
