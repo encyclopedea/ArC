@@ -3,8 +3,6 @@
 
 #include <iostream>
 
-#define CEIL_DIV(x,y) ( (x) / (y) + (((x) % (y)) ? 1 : 0) )
-
 Model::Model(){
 	total = 0;
 	digested = false;
@@ -27,7 +25,11 @@ bool Model::update(uint8_t c){
 bool Model::update(uint8_t c, int count){
 	// Prevent exceeding 31 bits of precision
 	if (((uint32_t) 0x1 << 31) - 1 - count < total){
-		std::cout << "UHOH\n";
+		return false;
+	}
+
+	// Prevent underflow
+	if (count < 0 && freqs[c] + count > freqs[c]){
 		return false;
 	}
 

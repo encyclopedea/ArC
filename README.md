@@ -20,10 +20,12 @@ This Arithmetic Coding library is meant to expand my understanding of current co
   * NULL always has at least one slot, since it is used for encoding symbols with frequencies of 0. This cannot be changed by calling update().
 * ArEncoder
   * ArEncoder must call finish() when done encoding, or up to 39 bits will remain in its internal buffers without being output, resulting in lost characters.
+  * ArEncoders should not be reused.
 * ArDecoder
   * ArDecoder begins reading from the input stream on construction.
   * ArDecoder does not know when to stop. It is up to the developer to decide a stopping condition and stop decoding characters.
     * Note that even when the error flags are set, valid characters may remain encoded. For this reason, ArDecoder can continue decoding characters even while it cannot read more characters from the input stream. 
+  * ArDecoders should not be reused.
 
 ##Documentation
 Note: This documentation includes only the functions that are intended for use by the user of this library. Other functions are publically available, but are intended for internal use.
@@ -33,10 +35,10 @@ Note: This documentation includes only the functions that are intended for use b
 | Function | Arguments | Role | Returns |
 |----------|-----------| -----|---------|
 | Model    | None | Constructor | N/A |
-| update   | **(uint8_t) c** The character to be updated | Increments the internal count of a character by 1. If the model has already been digested, this takes additional time. | **(bool)** Undefined return value |
-| update   | **(uint8_t) c** The character to be updated <br/><br/>**(int) count** The amount to update by | Increments (or, if count is negative, decrements) the internal count of a character by a specified amount. If the model has already been digested, this takes additional time. (Caution should be exercised here: if a negative **count** would cause a character's interal count to become negative, undefined behavior, of the form of mis-coding, will occur). | **(bool)** Undefined return value |
+| update   | **(uint8_t) c** The character to be updated | Increments the internal count of a character by 1. If the model has already been digested, this takes additional time. If the update would violate the 31 bit precision limits, it does not occur and returns false. | **(bool)** Returns false if the update failed, true otherwise. |
+| update   | **(uint8_t) c** The character to be updated <br/><br/>**(int) count** The amount to update by | Increments (or, if count is negative, decrements) the internal count of a character by a specified amount. If the model has already been digested, this takes additional time. If the update would violate the 31 bit precision limits or, in the case of a negative **count**, would underflow **c**'s interal count, it does not occur and returns false. | **(bool)** Returns false if the update failed, true otherwise. |
 | digest   | None | Digests the current model. Digestion is required for most of the other member functions to operate (many of them will call digest() if it has not occurred before proceeding). After digestion, both update() overloads take additional time. | void |
-| getTotal | None | Provides access to the total number of characters injested. Care should be taken to avoid exceeding the limits (see Limitations). | **(uint32_t)** The total number of characters injested.|
+| getTotal | None | Provides access to the total number of characters ingested. Care should be taken to avoid exceeding the limits (see Limitations). | **(uint32_t)** The total number of characters ingested.|
 | getCharCount | **(uint8_t) c** The character to check | Provides access to individual character counts. | **(uint32_t)** The internal count of ther specified character |
 | reset | None | Resets the Model. | void |
 | exportModel | **(std::ostream&) out** The stream to which the Model state will be output | Writes the current state of the Model to a stream (often a file). | void |
@@ -64,9 +66,12 @@ Note: This documentation includes only the functions that are intended for use b
 * All code in samples that directly uses ArC is wrapped in "USAGE OF LIBRARY" and "END USAGE OF LIBRARY" comments
 * List of current samples:
   * adaptive
-    * Demonstrates an adaptive style of coding where the model is updated after every character encoded/decoded. Use `./adaptive_sample -h` for usage. 
+    * Demonstrates an adaptive style of coding where the model is updated after every character encoded/decoded. Use `./adaptive_sample -h` for usage information. 
+  * heuristic
+    * Demonstrates the use of a static model based on a heuristic (in this case, the frequency counts of each character in the complete works of William Shakespeare, as found at http://www.gutenberg.org/cache/epub/100/pg100.txt). Use `./heuristic_sample -h` for usage information.
 
 ##Limitations
-* The total number of values (eg the number of characters injested) in Model cannot exceed 2 ^ 31
+* There is a 31 bit precision limit due to the use of 32 bit values during the encoding.
+  * The total number of values (eg the number of characters ingested) in Model cannot exceed 2 ^ 31 - 1
   * Any more will result in undefined behavior.
   * Therefore, it is suggested that for very large inputs, the frequency table in Model be simplified every so often.
