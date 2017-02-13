@@ -69,6 +69,8 @@ Note: This documentation includes only the functions that are intended for use b
     * Demonstrates an adaptive style of coding where the model is updated after every character encoded/decoded. Use `./adaptive_sample -h` for usage information. 
   * heuristic
     * Demonstrates the use of a static model based on a heuristic (in this case, the frequency counts of each character in the complete works of William Shakespeare, as found at http://www.gutenberg.org/cache/epub/100/pg100.txt). Use `./heuristic_sample -h` for usage information.
+  * benchmark
+    * Measures the latency for several important operations over averaged over 1000000 trials. To use: `./benchmark_sample`.
 
 ##Limitations
 * There is a 31 bit precision limit due to the use of 32 bit values during the encoding.

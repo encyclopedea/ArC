@@ -2,7 +2,7 @@ CPP 	:= g++
 OBJECTS := ArEncoder.o ArDecoder.o Model.o
 LIBS	:= -L lib -lArC
 INCLUDES:= -I src
-FLAGS	:= -O3 -Wall -Wextra -Wpedantic -Wshadow
+FLAGS	:= -O3 -Wall -Wextra -Wpedantic -Wshadow -std=c++11
 
 
 # General

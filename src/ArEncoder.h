@@ -22,8 +22,8 @@ private:
 	uint32_t top;
 	uint32_t bot;
 
-	bool outputBit(uint8_t c);
-	int outputPending(uint8_t c);
+	inline bool outputBit(uint8_t c);
+	inline int outputPending(uint8_t c);
 };
 
 #endif

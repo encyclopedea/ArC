@@ -29,7 +29,7 @@ private:
 	uint32_t bot;
 	uint32_t cur;
 
-	char getBit();
+	inline char getBit();
 };
 
 #endif

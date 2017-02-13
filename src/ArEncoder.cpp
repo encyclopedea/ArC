@@ -99,7 +99,7 @@ int ArEncoder::finish(){
  * Since it is private, it assumes that error checking on out
  * has already been done if it is being called.
  */
-bool ArEncoder::outputBit(uint8_t c){
+inline bool ArEncoder::outputBit(uint8_t c){
 	bool ret = false;
 	buf |= (c & 0x1) << bufcurs;
 	bufcurs--;
@@ -120,7 +120,7 @@ bool ArEncoder::outputBit(uint8_t c){
  * This is a private function so it is assumed that out has been
  * NULL checked if it is called.
  */
-int ArEncoder::outputPending(uint8_t c){
+inline int ArEncoder::outputPending(uint8_t c){
 	int ret = pending;
 	while(pending > 0){
 		outputBit(~c & 0x1);

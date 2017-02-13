@@ -97,7 +97,7 @@ uint8_t ArDecoder::getFlags(){
  *
  * Assumes that in is not null.
  */
-char ArDecoder::getBit(){
+inline char ArDecoder::getBit(){
 	if (flags){
 		return 0;
 	}
