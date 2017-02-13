@@ -16,9 +16,9 @@ public:
 private:
 	Model* m;
 	std::ostream* out;
+	uint8_t buf;
 	int pending;
 	int bufcurs;
-	uint8_t buf;
 	uint32_t top;
 	uint32_t bot;
 

@@ -22,9 +22,9 @@ public:
 private:
 	Model* m;
 	std::istream* in;
+	uint8_t flags;
 	uint8_t buf;
 	int bufcurs;
-	uint8_t flags;
 	uint32_t top;
 	uint32_t bot;
 	uint32_t cur;

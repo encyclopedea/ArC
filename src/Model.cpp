@@ -1,5 +1,4 @@
 #include "Model.h"
-#include "proto.h"
 
 #include <iostream>
 
@@ -206,7 +205,7 @@ void Model::exportModel(std::ostream& out){
 	}
 
 	// First, encode the total
-	out.write((char*)&total, TYPESIZE_BYTES);
+	out.write((char*)&total, sizeof(total));
 
 	// Encode frequencies other than NULL (0)
 	int i;
@@ -214,13 +213,13 @@ void Model::exportModel(std::ostream& out){
 		// Only encode frequencies if necessary
 		if (freqs[i] > 0){
 			out.put((char) i);
-			out.write((char*)&freqs[i], TYPESIZE_BYTES);
+			out.write((char*)(freqs + i), sizeof(*freqs));
 		}
 	}
 
 	// NULL is always encoded (and at the end)
 	out.put(0);
-	out.write((char*)&freqs[0], TYPESIZE_BYTES);
+	out.write((char*)&freqs[0], sizeof(*freqs));
 }
 
 /*
@@ -232,13 +231,13 @@ void Model::exportModel(std::ostream& out){
 void Model::importModel(std::istream& in){
 	reset();
 
-	in.read((char*)&total, TYPESIZE_BYTES);
+	in.read((char*)&total, sizeof(total));
 
 	char c = 1;
 
 	// While can read from in and NULL has not been read
 	while (c != 0 && in.good()){
 		in.get(c);
-		in.read((char*)&freqs[(uint8_t)c], TYPESIZE_BYTES);
+		in.read((char*)(freqs + (uint8_t)c), sizeof(*freqs));
 	}
 }

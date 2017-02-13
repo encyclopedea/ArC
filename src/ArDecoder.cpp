@@ -33,7 +33,7 @@ ArDecoder::~ArDecoder(){}
 
 uint8_t ArDecoder::get(){
 	if (flags & MODEL_NULL){
-		return 0x04;
+		return 0;
 	}
 
 	uint8_t c = m->getChar(cur, bot, top);
