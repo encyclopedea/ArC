@@ -16,14 +16,17 @@ public:
 private:
 	Model* m;
 	std::ostream* out;
-	uint8_t buf;
-	int bufcurs;
 	int pending;
+	int bufcurs;
+	uint8_t buf;
 	uint32_t top;
 	uint32_t bot;
 
 	inline bool outputBit(uint8_t c);
 	inline int outputPending(uint8_t c);
+
+	inline void removeFirstConvergence();
+	inline void removeSecondConvergence();
 };
 
 #endif

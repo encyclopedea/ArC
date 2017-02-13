@@ -30,6 +30,8 @@ private:
 	uint32_t cur;
 
 	inline char getBit();
+	inline void removeFirstConvergence();
+	inline void removeSecondConvergence();
 };
 
 #endif

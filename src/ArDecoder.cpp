@@ -1,8 +1,6 @@
 #include "ArDecoder.h"
-#include "proto.h"
 #include "Model.h"
-#include <iostream> // tmp
-#include <bitset> //tmp
+#include "bitTwiddle.h"
 
 
 ArDecoder::ArDecoder(Model* model, std::istream* instream){
@@ -22,7 +20,7 @@ ArDecoder::ArDecoder(Model* model, std::istream* instream){
 
 	if (!flags){
 		char* c = reinterpret_cast<char*>(&cur);
-		for (int i = TYPESIZE_BYTES - 1; i >= 0; i--){
+		for (int i = sizeof(cur) - 1; i >= 0; i--){
 			c[i] = in->get();
 		}
 	}
@@ -44,8 +42,15 @@ uint8_t ArDecoder::get(){
 	top = m->calcUpper(c, bot, top);
 	bot = m->calcLower(c, bot, tmp);
 
+	removeFirstConvergence();
+	removeSecondConvergence();
+
+	return c;
+}
+
+inline void ArDecoder::removeFirstConvergence(){
 	// While the first bit of top and bot are the same
-	while ((0x1 << (TYPESIZE - 1)) & ~(top ^ bot)){
+	while (SELECT_BIT_FRONT(1, ~(top ^ bot))){
 		// Discard the first bit of top, bot, cur
 
 		// Load 1 into top
@@ -59,24 +64,24 @@ uint8_t ArDecoder::get(){
 		cur <<= 1;
 		cur |= getBit() & 0x1;
 	}
+}
 
+inline void ArDecoder::removeSecondConvergence(){
 	// While the second bit of bot is 1 and of top is 0
-	while (((0x1 << (TYPESIZE - 2)) & top) < ((0x1 << (TYPESIZE - 2)) & bot)){
+	while (SELECT_BIT_FRONT(2, top) < SELECT_BIT_FRONT(2, bot)){
 
 		// Remove the second bit of top and load a 1 in the back
-		top = (top << 1) | (1 << (TYPESIZE - 1));
+		top = (top << 1) | (1 << (sizeof(top) * 8 - 1));
 		top |= 0x1;
 
 		// Remove the second bit of bot and leave a 0 in back
-		bot = (bot << 1) & ~(1 << (TYPESIZE - 1));
+		bot = (bot << 1) & ~(1 << (sizeof(bot) * 8 - 1));
 
 		// Remove the second bit of bot
-		cur <<= 1;						// Second bit is opposite of first bit so don't lose it
-		cur ^= 0x1 << (TYPESIZE - 1);	// Restore the first bit by inverting the new first bit
+		cur <<= 1;	// Second bit is opposite of first bit so don't lose it
+		cur ^= 0x1 << (sizeof(cur) * 8 - 1);	// Restore the first bit by inverting the new first bit
 		cur |= getBit() & 0x1;
 	}
-
-	return c;
 }
 
 /*

@@ -1,6 +1,6 @@
 #include "ArEncoder.h"
-#include "proto.h"
 #include "Model.h"
+#include "bitTwiddle.h"
 
 ArEncoder::ArEncoder(Model* model, std::ostream* outstream){
 	m = model;
@@ -10,8 +10,8 @@ ArEncoder::ArEncoder(Model* model, std::ostream* outstream){
 	buf = 0;
 	pending = 0;
 
-	top = 0xffffffff;
-	bot = 0x0;
+	top = ~0;
+	bot = 0;
 }
 
 ArEncoder::~ArEncoder(){}
@@ -30,10 +30,17 @@ bool ArEncoder::put(uint8_t c){
 	top = m->calcUpper(c, bot, top);
 	bot = m->calcLower(c, bot, tmp);
 
+	removeFirstConvergence();
+	removeSecondConvergence();
+
+	return true;
+}
+
+inline void ArEncoder::removeFirstConvergence(){
 	// While the first bit of top and bot are the same
-	while ((0x1 << (TYPESIZE - 1)) & ~(top ^ bot)){
-		outputBit(top >> (TYPESIZE - 1));
-		outputPending(top >> (TYPESIZE - 1));
+	while (SELECT_BIT_FRONT(1, ~(top ^ bot))){
+		outputBit(top >> (sizeof(top) * 8 - 1));
+		outputPending(top >> (sizeof(top) * 8 - 1));
 
 		// Left shift top, loading a 1 in
 		top <<= 1;
@@ -41,20 +48,20 @@ bool ArEncoder::put(uint8_t c){
 		// Left shift bot, loading a 0 in
 		bot <<= 1;
 	}
+}
 
+inline void ArEncoder::removeSecondConvergence(){
 	// While the second bit of bot is 1 and of top is 0
-	while (((0x1 << (TYPESIZE - 2)) & top) < ((0x1 << (TYPESIZE - 2)) & bot)){
+	while (SELECT_BIT_FRONT(2, top) < SELECT_BIT_FRONT(2, bot)){
 		pending++;
 
 		// Remove the second bit of top and load a 1 in the back
-		top = (top << 1) | (1 << (TYPESIZE - 1));
+		top = (top << 1) | (1 << (sizeof(top) * 8 - 1));
 		top |= 1;
 
 		// Remove the second bit of bot and leave a 0 in the back
-		bot = (bot << 1) & ~(1 << (TYPESIZE - 1));
+		bot = (bot << 1) & ~(1 << (sizeof(bot) * 8 - 1));
 	}
-
-	return true;
 }
 
 /*
@@ -71,7 +78,7 @@ int ArEncoder::finish(){
 		return -1;
 	}
 
-	int ret = TYPESIZE + pending + 7 - bufcurs;
+	int ret = sizeof(bot) * 8 + pending + 7 - bufcurs;
 
 	// First bit of bot is always 0 - otherwise it would have converged
 	outputBit(0);
@@ -93,7 +100,7 @@ int ArEncoder::finish(){
 }
 
 /*
- * Performs a buffered output. Uses only the 0th bit of c.
+ * Performs a buffered output. Uses only the rightmost bit of c.
  * Returns true if the buffer was output, false otherwise.
  *
  * Since it is private, it assumes that error checking on out
@@ -115,7 +122,7 @@ inline bool ArEncoder::outputBit(uint8_t c){
 }
 
 /*
- * Outputs the pending bits as the inverse of the 0th bit of c.
+ * Outputs the pending bits as the inverse of the rightmost bit of c.
  *
  * This is a private function so it is assumed that out has been
  * NULL checked if it is called.
@@ -126,5 +133,6 @@ inline int ArEncoder::outputPending(uint8_t c){
 		outputBit(~c & 0x1);
 		pending--;
 	}
+	
 	return ret;
 }
