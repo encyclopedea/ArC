@@ -1,15 +1,15 @@
 This Arithmetic Coding library is meant to expand my understanding of current compression techniques and practice my coding.
 
-##Overview
+## Overview
 * Model is the core to this library. It stores frequencies, calculates bounds, and looks up characters in an internal table.
 * ArEncoder is the encoder. It uses a Model (which it does not modify or export) and an istream to encode characters and output bits as necessary.
 * ArDecoder is the decoder. It uses a Model (which it does not modify or import) and an ostream to decode characters.
 
-##Usage
+## Usage
 * Compiler flags: `-L path/to/ArC/lib -lArC -I path/to/ArC/src`
 * Includes: ArEncoder.h, ArDecoder.h, Model.h
 
-##Usage Notes and Suggestions
+## Usage Notes and Suggestions
 * This code is meant to have lots of flexibility by being less structured.
 * Model
   * A Model can be freely manipulated, even while in use. 
@@ -27,10 +27,10 @@ This Arithmetic Coding library is meant to expand my understanding of current co
     * Note that even when the error flags are set, valid characters may remain encoded. For this reason, ArDecoder can continue decoding characters even while it cannot read more characters from the input stream. 
   * ArDecoders should not be reused.
 
-##Documentation
+## Documentation
 Note: This documentation includes only the functions that are intended for use by the user of this library. Other functions are publically available, but are intended for internal use.
 
-###Model
+### Model
 
 | Function | Arguments | Role | Returns |
 |----------|-----------| -----|---------|
@@ -44,14 +44,14 @@ Note: This documentation includes only the functions that are intended for use b
 | exportModel | **(std::ostream&) out** The stream to which the Model state will be output | Writes the current state of the Model to a stream (often a file). | void |
 | importModel | **(std::istream&) in** The stream from which the Model state will be read | Loads a Model state from an input (often a file), which overwrites the current Model state. | void |
 
-###ArEncoder
+### ArEncoder
 | Function | Arguments | Role | Returns |
 |----------|-----------| -----|---------|
 | ArEncoder | **(Model\*) m** A pointer to the Model to be used <br/><br/> **(std::ostream\*) out** A point to the output stream | Constructor | N/A |
 | put | **(uint8_t) c** The character to be encoded | Encodes a single character and outputs bits to the output stream as necessary. | **(bool)** False if the Model or outputstream are NULL. Otherwise, true. |
 | finish | None | Writes the remaining bits in the internal buffers to the output stream. This should be called after every full encoding, at the risk of losing characters. This is NOT called by the destructor. | **(int)** If out is NULL, -1. Otherwise, this is the number of bits that were output from the internal buffers. |
 
-###ArDecoder
+### ArDecoder
 | Function | Arguments | Role | Returns |
 |----------|-----------| -----|---------|
 | ArDecoder | **(Model\*) m** A pointer to the Model to be used <br/><br/> **(std::istream\*) in** A pointer to the input stream | Constructor | N/A |
@@ -59,7 +59,7 @@ Note: This documentation includes only the functions that are intended for use b
 | good | None | Tells the state of the stream. | **(bool)** Returns false if no error flags are set, and true otherwise. |
 
 
-##Samples
+## Samples
 * To make all samples: `make samples`
 * To make a specific sample: `make <samplename>_sample`
 * All samples compile to an executable named "<samplename>_sample"
@@ -72,7 +72,7 @@ Note: This documentation includes only the functions that are intended for use b
   * benchmark
     * Measures the latency for several important operations over averaged over 1000000 trials. To use: `./benchmark_sample`.
 
-##Limitations
+## Limitations
 * There is a 31 bit precision limit due to the use of 32 bit values during the encoding.
   * The total number of values (eg the number of characters ingested) in Model cannot exceed 2 ^ 31 - 1
   * Any more will result in undefined behavior.
