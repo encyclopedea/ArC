@@ -62,13 +62,15 @@ Note: This documentation includes only the functions that are intended for use b
 ## Samples
 * To make all samples: `make samples`
 * To make a specific sample: `make <samplename>_sample`
-* All samples compile to an executable named "<samplename>_sample"
+* All samples compile to an executable named "\<samplename\>_sample"
 * All code in samples that directly uses ArC is wrapped in "USAGE OF LIBRARY" and "END USAGE OF LIBRARY" comments
 * List of current samples:
   * adaptive
-    * Demonstrates an adaptive style of coding where the model is updated after every character encoded/decoded. Use `./adaptive_sample -h` for usage information. 
+    * Demonstrates an adaptive style of coding where the model is updated after every character encoded/decoded. Not suitable for use on binaries or other files which contain the EOT (0x4) character, due to the streaming style implementation. Use `./adaptive_sample -h` for usage information. 
   * heuristic
-    * Demonstrates the use of a static model based on a heuristic (in this case, the frequency counts of each character in the complete works of William Shakespeare, as found at http://www.gutenberg.org/cache/epub/100/pg100.txt). Use `./heuristic_sample -h` for usage information.
+    * Demonstrates the use of a static model based on a heuristic (in this case, the frequency counts of each character in the complete works of William Shakespeare, as found at http://www.gutenberg.org/cache/epub/100/pg100.txt). Not suitable for use on binaries or other files which contain the EOT (0x4) character, due to the streaming style implementation. Use `./heuristic_sample -h` for usage information.
+  * perfect
+    * Demonstrates the use of a perfectly representative model created by reading the file beforehand. This is suitable for usage on all files. Use `./perfect_sample -h` for usage information. 
   * benchmark
     * Measures the latency for several important operations over averaged over 1000000 trials. To use: `./benchmark_sample`.
 
