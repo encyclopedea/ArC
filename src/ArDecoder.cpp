@@ -19,10 +19,7 @@ ArDecoder::ArDecoder(Model* model, std::istream* instream){
 	}
 
 	if (!flags){
-		char* c = reinterpret_cast<char*>(&cur);
-		for (int i = sizeof(cur) - 1; i >= 0; i--){
-			c[i] = in->get();
-		}
+		in->read((char*) &cur, sizeof(cur));
 	}
 
 	top = ~0;
@@ -109,8 +106,8 @@ inline char ArDecoder::getBit(){
 
 	if (bufcurs-- < 1){
 		if (in->good()){
-			buf = in->get();
-			bufcurs = 7;
+			in->read((char*) &buf, sizeof(buf));
+			bufcurs = sizeof(buf) * 8 - 1;
 		} else{
 			flags |= STREAM_NOT_GOOD;
 			return 0;

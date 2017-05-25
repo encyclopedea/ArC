@@ -6,7 +6,7 @@ ArEncoder::ArEncoder(Model* model, std::ostream* outstream){
 	m = model;
 	out = outstream;
 
-	bufcurs = 7;
+	bufcurs = sizeof(buf) * 8 - 1;
 	buf = 0;
 	pending = 0;
 
@@ -36,18 +36,35 @@ bool ArEncoder::put(uint8_t c){
 	return true;
 }
 
+#include <iostream>
 inline void ArEncoder::removeFirstConvergence(){
-	// While the first bit of top and bot are the same
-	while (SELECT_BIT_FRONT(1, ~(top ^ bot))){
+	// // While the first bit of top and bot are the same
+	// while (SELECT_BIT_FRONT(1, ~(top ^ bot))){
+	// 	outputBits(top >> (sizeof(top) * 8 - 1), 1);
+	// 	outputPending(top >> (sizeof(top) * 8 - 1));
+
+	// 	// Left shift top, loading a 1 in
+	// 	top <<= 1;
+	// 	top |= 0x1;
+	// 	// Left shift bot, loading a 0 in
+	// 	bot <<= 1;
+	// }
+
+	// Remove front matching bits
+	int count = __builtin_clz(top ^ bot);
+	if (count > 0){
 		outputBit(top >> (sizeof(top) * 8 - 1));
 		outputPending(top >> (sizeof(top) * 8 - 1));
+		if (count > 1){
+			outputBits(top >> (sizeof(top) * 8 - count), count - 1); // TODO outputting wrong?
+		}
+		top <<= count;
+		top |= (1 << count) - 1;
 
-		// Left shift top, loading a 1 in
-		top <<= 1;
-		top |= 0x1;
-		// Left shift bot, loading a 0 in
-		bot <<= 1;
+		bot <<= count;
 	}
+
+
 }
 
 inline void ArEncoder::removeSecondConvergence(){
@@ -62,6 +79,15 @@ inline void ArEncoder::removeSecondConvergence(){
 		// Remove the second bit of bot and leave a 0 in the back
 		bot = (bot << 1) & ~(1 << (sizeof(bot) * 8 - 1));
 	}
+	// int count = __builtin_clz(top - bot);
+	// pending += count;
+
+	// // Remove 2nd+ bits and load 1s in the back
+	// top = (top << count) | (1 << (sizeof(top) * 8 - 1));
+	// top |= (1 << count) - 1;
+
+	// // Remove 2nd+ bits and leave 0s in the back
+	// bot = (bot << count) & ~(1 << (sizeof(bot) * 8 - 1));
 }
 
 /*
@@ -78,7 +104,7 @@ int ArEncoder::finish(){
 		return -1;
 	}
 
-	int ret = sizeof(bot) * 8 + pending + 7 - bufcurs;
+	int ret = sizeof(bot) * 8 + pending + sizeof(buf) * 8 - 1 - bufcurs;
 
 	// First bit of bot is always 0 - otherwise it would have converged
 	outputBit(0);
@@ -91,9 +117,9 @@ int ArEncoder::finish(){
 	}
 
 	if (!cleared){
-		out->put(buf);
+		out->write((char*) &buf, sizeof(buf));
 		buf = 0;
-		bufcurs = 7;
+		bufcurs = sizeof(buf) * 8 - 1;
 	}
 
 	return ret;
@@ -108,15 +134,45 @@ int ArEncoder::finish(){
  */
 inline bool ArEncoder::outputBit(uint8_t c){
 	bool ret = false;
-	buf |= (c & 0x1) << bufcurs;
+	buf |= ((uint32_t)c & 0x1) << bufcurs;
 	bufcurs--;
 
 	if (bufcurs < 0){
-		out->put(buf);
+		out->write((char*) &buf, sizeof(buf));
 		buf = 0;
-		bufcurs = 7;
+		bufcurs = sizeof(buf) * 8 - 1;
 		ret = true;
 	}
+
+	return ret;
+}
+
+inline bool ArEncoder::outputBits(uint32_t bits, int count){
+	bool ret = false;
+
+	// Determine the number that will fit normally
+	int fit = (bufcurs + 1 < count) ? bufcurs + 1 : count;
+	uint32_t mask = (1 << (fit)) - 1;
+	buf |= (mask & (bits >> (count - fit))) << (bufcurs - fit + 1);
+	bufcurs -= fit;
+
+
+	// Output if necessary
+	if (bufcurs < 0){
+		out->write((char*) &buf, sizeof(buf));
+		buf = 0;
+		bufcurs = sizeof(buf) * 8 - 1;
+		ret = true;
+
+		// Shove the rest in
+		if (count - fit > 0){
+			mask = (1 << (count - fit)) - 1;	// Mask for remainder
+			buf |= (mask & bits) << (bufcurs - (count - fit) + 1);	// Put the remainder in
+			bufcurs -= count - fit;	// Track the cursor
+		}
+	}
+
+	// Do not need to output again (added max 31 bits in second round)
 
 	return ret;
 }

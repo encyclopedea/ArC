@@ -23,7 +23,7 @@ private:
 	Model* m;
 	std::istream* in;
 	uint8_t flags;
-	uint8_t buf;
+	uint32_t buf;
 	int bufcurs;
 	uint32_t top;
 	uint32_t bot;

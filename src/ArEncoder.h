@@ -16,12 +16,13 @@ public:
 private:
 	Model* m;
 	std::ostream* out;
-	uint8_t buf;
+	uint32_t buf;
 	int pending;
 	int bufcurs;
 	uint32_t top;
 	uint32_t bot;
 
+	inline bool outputBits(uint32_t bits, int count);
 	inline bool outputBit(uint8_t c);
 	inline int outputPending(uint8_t c);
 
