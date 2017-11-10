@@ -94,16 +94,18 @@ int encode(std::string inputFile, std::string outputFile){
 		m.update(c);
 		c = ifs.get();
 	}
-
-	m.exportModel(ofs);
 	ifs.clear();
 	ifs.seekg(0);
 
+	m.exportModel(ofs);
+
+	// Start encoding the characters
 	int i = 0;
 	c = ifs.get();
 	while (ifs.good()){
 		i++;
 		are.put(c);
+		m.update(c, -1);	// We already used this instance of the character, won't be seeing it again
 		c = ifs.get();
 	}
 
@@ -142,9 +144,11 @@ int decode(std::string inputFile, std::string outputFile){
 	ArDecoder ard(&m, &ifs);	// Constructor reads from input, so create AFTER importing model
 	
 	unsigned int i = 0;
+	unsigned int total = m.getTotal();	// Will be changing m.getTotal later
 	char c;
 	c = ard.get();
-	while (i < m.getTotal()){ // While there are still characters to read
+	while (i < total){ // While there are still characters to read
+		m.update(c, -1);
 		i++;
 		ofs.put(c);
 		c = ard.get();
