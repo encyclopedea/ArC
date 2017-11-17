@@ -20,6 +20,7 @@ public:
 	uint8_t getChar(uint32_t enc, uint32_t bot, uint32_t top);
 	uint32_t getTotal();
 	uint32_t getCharCount(uint8_t c);
+	double getEntropy();
 
 	void reset();
 

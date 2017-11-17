@@ -1,6 +1,9 @@
 #include "Model.h"
 
 #include <iostream>
+#include <cmath>
+
+#define CEIL_DIV(x, y)	((x) / (y) + ((x) % (y) ? 1 : 0))
 
 Model::Model(){
 	total = 0;
@@ -100,13 +103,17 @@ uint32_t Model::calcUpper(uint8_t c, uint32_t bot, uint32_t top){
 		return bot + 1;
 	}
 
+	// The true range: bot and top are inclusive
+	uint64_t range = (uint64_t) top + 1 - bot;
+
 	// Find the scaling factor
 	// Add 1 for the shadow "not present" value at 0
-	uint32_t conversion = (top - bot) / (total + 1);
+	// uint32_t conversion = (top - bot) / (total + 1);
+	uint32_t offset = CEIL_DIV((freqs[c] + 1) * range, total + 1);
 
 	// Adding the given bot ensures that it is within the proper range
-	// total + 1 due to a shadow "not present" value at 0
-	return bot + (freqs[c] + 1) * conversion;
+	// -1 to keep the encoder inclusive - this helps with streaming 1s into the backside
+	return bot + offset - 1;
 
 }
 
@@ -126,14 +133,15 @@ uint32_t Model::calcLower(uint8_t c, uint32_t bot, uint32_t top){
 		return bot;
 	}
 
-	// Find the scaling factor
-	// Add 1 to total for the shadow "not present" value at 0
-	uint32_t conversion = (top - bot) / (total + 1); 
-	
+	// The true range: bot and top are inclusive
+	uint64_t range = (uint64_t) top + 1 - bot;
+
+	// Scale the offset onto the true range
+	// Add 1 to prev to account for the shadow "not present" value
+	uint32_t offset = CEIL_DIV((prev + 1) * range, total + 1);
 
 	// Adding the given bot ensures that it is within the proper range
-	// total + 1 due to a shadow "not present" value at 0
-	return bot + (prev + 1) * conversion;
+	return bot + offset;
 }
 
 /*
@@ -146,8 +154,8 @@ uint8_t Model::getChar(uint32_t enc, uint32_t bot, uint32_t top){
 	digest();
 
 	// Scale enc onto the total number of characters seen
-	uint32_t conversion = (top - bot) / (total + 1);
-	enc = (enc - bot) / conversion;
+	uint64_t range = (uint64_t)top + 1 - bot;
+	enc = (uint64_t)(enc - bot) * (total + 1) / range;
 
 	// Binary search freqs for the closest value > c
 	int upper = 0xFF;	// Inclusive
@@ -179,6 +187,16 @@ uint32_t Model::getCharCount(uint8_t c){
 		return freqs[c] - freqs[c - 1];
 	}
 	return freqs[c];
+}
+
+double Model::getEntropy(){
+	undigest();
+	double prob, entropy = 0;
+	for (int i = 1; i < 256; i++){
+		prob = (double)freqs[i] / total;
+		entropy -= prob ? prob * log2(prob) : 0;
+	}
+	return entropy;
 }
 
 /*
