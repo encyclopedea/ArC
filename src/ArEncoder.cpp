@@ -38,18 +38,6 @@ bool ArEncoder::put(uint8_t c){
 
 #include <iostream>
 inline void ArEncoder::removeFirstConvergence(){
-	// // While the first bit of top and bot are the same
-	// while (SELECT_BIT_FRONT(1, ~(top ^ bot))){
-	// 	outputBits(top >> (sizeof(top) * 8 - 1), 1);
-	// 	outputPending(top >> (sizeof(top) * 8 - 1));
-
-	// 	// Left shift top, loading a 1 in
-	// 	top <<= 1;
-	// 	top |= 0x1;
-	// 	// Left shift bot, loading a 0 in
-	// 	bot <<= 1;
-	// }
-
 	// Remove front matching bits
 	int count = __builtin_clz(top ^ bot);
 	if (count > 0){
@@ -79,15 +67,6 @@ inline void ArEncoder::removeSecondConvergence(){
 		// Remove the second bit of bot and leave a 0 in the back
 		bot = (bot << 1) & ~(1 << (sizeof(bot) * 8 - 1));
 	}
-	// int count = __builtin_clz(top - bot);
-	// pending += count;
-
-	// // Remove 2nd+ bits and load 1s in the back
-	// top = (top << count) | (1 << (sizeof(top) * 8 - 1));
-	// top |= (1 << count) - 1;
-
-	// // Remove 2nd+ bits and leave 0s in the back
-	// bot = (bot << count) & ~(1 << (sizeof(bot) * 8 - 1));
 }
 
 /*
